@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.4
 ARG BUILD_TARGET=embodied
 ARG TARGETARCH
 # Hardware platform for the install: nvidia (default), amd (ROCm), or ascend (CANN).
@@ -74,20 +75,20 @@ ENV NO_MIRROR=${NO_MIRROR}
 ENV DEBIAN_FRONTEND=noninteractive
 RUN if [ "$NO_MIRROR" != "1" ]; then \
         if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then \
-            if [ "$TARGETARCH" = "arm64" ]; then \
-                sed -i 's@//ports.ubuntu.com@//mirrors.ustc.edu.cn@g' /etc/apt/sources.list.d/ubuntu.sources; \
-            else \
-                sed -i 's@//.*archive.ubuntu.com@//mirrors.ustc.edu.cn@g' /etc/apt/sources.list.d/ubuntu.sources; \
-            fi; \
-        elif [ "$TARGETARCH" = "arm64" ]; then \
+            sed -i \
+                -e 's@//ports.ubuntu.com@//mirrors.ustc.edu.cn@g' \
+                -e 's@//.*archive.ubuntu.com@//mirrors.ustc.edu.cn@g' \
+                /etc/apt/sources.list.d/ubuntu.sources; \
+        elif [ -f /etc/apt/sources.list ]; then \
             sed -i \
                 -e 's@//ports.ubuntu.com/\? @//ports.ubuntu.com/ubuntu-ports @g' \
                 -e 's@//ports.ubuntu.com@//mirrors.ustc.edu.cn@g' \
+                -e 's@//.*archive.ubuntu.com@//mirrors.ustc.edu.cn@g' \
                 /etc/apt/sources.list; \
-        else \
-            sed -i 's@//.*archive.ubuntu.com@//mirrors.ustc.edu.cn@g' /etc/apt/sources.list; \
         fi; \
     fi
+RUN chmod a+rx /etc/apt/trusted.gpg.d /usr/share/keyrings /etc/apt/keyrings 2>/dev/null || true && \
+    chmod a+r /etc/apt/trusted.gpg.d/*.gpg /usr/share/keyrings/*.gpg /etc/apt/keyrings/*.gpg 2>/dev/null || true
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git vim libibverbs-dev openssh-server sudo runit runit-systemd tmux \
     build-essential python3-dev cmake pkg-config iproute2 pciutils python3 python3-pip \
@@ -399,7 +400,8 @@ ENV LIBERO_PATH=/opt/envs/LIBERO
 # Install openvla, openvla-oft, and dreamzero envs
 RUN bash requirements/install.sh ${INSTALL_MIRROR_OPTION} --platform ${RLINF_PLATFORM} embodied --venv openvla --model openvla --env libero && \
     bash requirements/install.sh ${INSTALL_MIRROR_OPTION} --platform ${RLINF_PLATFORM} embodied --venv openvla-oft --model openvla-oft --env libero && \
-    bash requirements/install.sh ${INSTALL_MIRROR_OPTION} --platform ${RLINF_PLATFORM} embodied --venv dreamzero --model dreamzero --env libero
+    bash requirements/install.sh ${INSTALL_MIRROR_OPTION} --platform ${RLINF_PLATFORM} embodied --venv dreamzero --model dreamzero --env libero && \
+    bash requirements/install.sh ${INSTALL_MIRROR_OPTION} --platform ${RLINF_PLATFORM} embodied --venv gr00t --model gr00t --env libero
 
 # Set default env
 RUN echo "source ${UV_PATH}/openvla/bin/activate" >> ~/.bashrc
