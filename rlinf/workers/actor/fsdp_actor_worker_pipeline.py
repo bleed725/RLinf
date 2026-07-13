@@ -53,6 +53,7 @@ class PipelineEmbodiedFSDPActor(EmbodiedFSDPActor):
             self.micro_batches_per_step // self.gradient_accumulation
         )
 
+    @Worker.timer("actor/try_recv_micro_batch")
     def try_recv_micro_batch(
         self,
         input_channel: Channel,
@@ -67,6 +68,7 @@ class PipelineEmbodiedFSDPActor(EmbodiedFSDPActor):
         except asyncio.QueueEmpty:
             return None
 
+    @Worker.timer("actor/try_recv_micro_batch")
     def recv_micro_batch(self, input_channel: Channel) -> dict[str, torch.Tensor]:
         packed_batch = input_channel.get(
             key=CommMapper.build_channel_key(self._rank, self._rank, "pipeline_actor")

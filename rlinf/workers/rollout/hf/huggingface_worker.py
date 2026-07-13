@@ -212,6 +212,7 @@ class MultiStepRolloutWorker(Worker):
                 ),
             }
 
+    @Worker.timer("send_rollout_result")
     def send_rollout_result(
         self,
         output_channel: Channel,
@@ -452,6 +453,7 @@ class MultiStepRolloutWorker(Worker):
         self.batch_router[tag] = []
         return AsyncRouteWork(works, lambda _: None)
 
+    @Worker.timer("recv_env_output")
     async def recv_env_output(
         self,
         input_channel: Channel,
@@ -585,6 +587,7 @@ class MultiStepRolloutWorker(Worker):
                 final_values = torch.zeros_like(actions[:, :1], dtype=torch.float32)
         return final_values[:, :1].cpu().contiguous()
 
+    @Worker.timer("sync_model_from_actor")
     async def sync_model_from_actor(self):
         """Sync model parameters from the actor worker."""
 
@@ -774,12 +777,14 @@ class MultiStepRolloutWorker(Worker):
             if self.enable_offload:
                 self.offload_model()
 
+    @Worker.timer("offload_model")
     def offload_model(self):
         if self.enable_cuda_graph:
             self.hf_model.release_cuda_graph()
         self.hf_model.to("cpu")
         self.torch_platform.empty_cache()
 
+    @Worker.timer("reload_model")
     def reload_model(self):
         self.hf_model.to(self.device)
         if self.enable_cuda_graph:
@@ -879,5 +884,6 @@ class MultiStepRolloutWorker(Worker):
         ]
 
     def set_global_step(self, global_step: int):
+        self._timeline_step = global_step
         if hasattr(self.hf_model, "set_global_step"):
             self.hf_model.set_global_step(global_step)

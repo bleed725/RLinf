@@ -1539,6 +1539,7 @@ class EmbodiedFSDPActor(FSDPModelManager, Worker):
         """
         Set the global step for the model, if needed.
         """
+        self._timeline_step = global_step
         self.version = global_step
         if hasattr(self.model, "set_global_step"):
             self.model.set_global_step(global_step)

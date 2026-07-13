@@ -29,6 +29,7 @@ from typing_extensions import Self
 
 from rlinf.scheduler import Worker
 from rlinf.utils.timers import NamedTimer
+from rlinf.utils.timeline import span
 
 
 def compute_rollout_metrics_dynamic(
@@ -1332,7 +1333,8 @@ class ScopedTimer:
     def __call__(self, name: str):
         try:
             self._timer.start(name=name)
-            yield
+            with span(name, category="runner"):
+                yield
         finally:
             self._timer.stop(name=name)
             if name in self._duration_log:

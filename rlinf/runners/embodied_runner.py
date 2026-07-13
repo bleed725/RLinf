@@ -30,6 +30,7 @@ from rlinf.utils.metric_logger import MetricLogger
 from rlinf.utils.metric_utils import compute_evaluate_metrics, print_metrics_table
 from rlinf.utils.runner_utils import check_progress
 from rlinf.utils.timers import Timer
+from rlinf.utils.timeline import configure_from_cfg, set_step
 
 logger = logging.getLogger(__name__)
 
@@ -110,6 +111,7 @@ class EmbodiedRunner:
         self.set_max_steps()
 
         self.timer = ScopedTimer(reduction="max", sync_cuda=False)
+        configure_from_cfg(cfg)
 
         self.logger = get_logger()
         self.metric_logger = MetricLogger(cfg)
@@ -483,8 +485,11 @@ class EmbodiedRunner:
         start_time = time.time()
         for _step in range(start_step, self.max_steps):
             # set global step
+            set_step(self.global_step)
             self.actor.set_global_step(self.global_step)
             self.rollout.set_global_step(self.global_step)
+            if hasattr(self.env, "set_global_step"):
+                self.env.set_global_step(self.global_step)
 
             profiled_step = (
                 self.global_step
@@ -566,8 +571,11 @@ class EmbodiedRunner:
         start_time = time.time()
         for _step in range(start_step, self.max_steps):
             # set global step
+            set_step(self.global_step)
             self.actor.set_global_step(self.global_step)
             self.rollout.set_global_step(self.global_step)
+            if hasattr(self.env, "set_global_step"):
+                self.env.set_global_step(self.global_step)
 
             profiled_step = (
                 self.global_step

@@ -39,6 +39,7 @@ from ..cluster import (
 )
 from ..hardware import AcceleratorType, AcceleratorUtil, HardwareInfo
 from ..manager import WorkerAddress
+from rlinf.utils.timeline import worker_span
 from .routing import split_channel_message
 
 if TYPE_CHECKING:
@@ -1315,7 +1316,8 @@ class Worker(metaclass=WorkerMeta):
         assert tag is not None, "Timer tag must be provided."
         try:
             start_time = time.perf_counter()
-            yield
+            with worker_span(self, tag, category="worker"):
+                yield
         finally:
             duration = time.perf_counter() - start_time
             self._timer_metrics[tag] = self._timer_metrics.get(tag, 0.0) + duration

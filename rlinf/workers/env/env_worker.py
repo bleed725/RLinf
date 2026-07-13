@@ -925,7 +925,7 @@ class EnvWorker(Worker):
         env_metrics = defaultdict(list)
 
         for epoch in range(self.rollout_epoch):
-            env_outputs = self.bootstrap_step()
+            # env_outputs = self.bootstrap_step()
             for stage_id in range(self.stage_num):
                 if epoch == 0 and self._prefetched_train_bootstrap is not None:
                     env_outputs = self._prefetched_train_bootstrap
@@ -1136,6 +1136,9 @@ class EnvWorker(Worker):
 
         return env_metrics
 
+    def set_global_step(self, global_step: int) -> None:
+        self._timeline_step = global_step
+
     def evaluate(self, input_channel: Channel, rollout_channel: Channel):
         eval_metrics = defaultdict(list)
 
@@ -1298,6 +1301,7 @@ class EnvWorker(Worker):
         micro_batches = split_dict_to_chunk(flatten_batch, num_micro_batches, dim=0)
         return [pack_batch(micro_batch) for micro_batch in micro_batches]
 
+    @Worker.timer("env/send_rollout_trajectories_pipeline")
     async def send_rollout_trajectories_pipeline(
         self,
         rollout_results: list[EmbodiedRolloutResult],

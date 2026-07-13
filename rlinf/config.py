@@ -1292,6 +1292,15 @@ def validate_cfg(cfg: DictConfig) -> DictConfig:
             cfg.runner.per_worker_log_path = os.path.join(
                 cfg.runner.logger.log_path, "worker_logs"
             )
+        cfg.runner.timeline = cfg.runner.get("timeline", {})
+        timeline_log_path = cfg.runner.logger.log_path or "."
+        cfg.runner.timeline.enabled = cfg.runner.timeline.get("enabled", False)
+        cfg.runner.timeline.output_dir = cfg.runner.timeline.get(
+            "output_dir", None
+        ) or os.path.join(timeline_log_path, "timeline")
+        cfg.runner.timeline.min_duration_ms = cfg.runner.timeline.get(
+            "min_duration_ms", 0.0
+        )
         profiling_cfg = cfg.cluster.get("profiling", None)
         if profiling_cfg is not None and bool(profiling_cfg.get("enabled", True)):
             if not profiling_cfg.get("output_dir", None):
